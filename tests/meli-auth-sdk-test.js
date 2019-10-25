@@ -29,7 +29,6 @@ describe('MeliAuthSdk', () => {
 		stub.restore();
 	});
 
-
 	it('Should return a token string', async () => {
 		const keyArn = 'arn:aws:kms:us-east-1:026813942644:key/XXXXXXXX-XXXX-XXXX-XXXX-123456789876';
 
@@ -54,15 +53,15 @@ describe('MeliAuthSdk', () => {
 		stubKeyArn.restore();
 	});
 
-	it('Should fail ms request', async () => {
+	it('Should fail ms request when status code is 200 and no response body', async () => {
 		const keyArn = 'arn:aws:kms:us-east-1:026813942644:key/XXXXXXXX-XXXX-XXXX-XXXX-123456789876';
 		const stubKeyArn = sinon.stub(MeliAuthSdk, '_getKmsArn').returns(keyArn);
 
-		let msResponse = {
+		const msResponse = {
 			statusCode: 200
 		};
-		let stubMs = sinon.stub(MicroServiceCall.prototype, 'get').resolves(msResponse);
 
+		const stubMs = sinon.stub(MicroServiceCall.prototype, 'get').resolves(msResponse);
 		// eslint-disable-next-line no-underscore-dangle
 		assert.rejects(MeliAuthSdk.getAccessToken(), {
 			name: 'MeliAuthSdkError',
@@ -70,12 +69,35 @@ describe('MeliAuthSdk', () => {
 		});
 
 		stubMs.restore();
+		stubKeyArn.restore();
+	});
 
-		msResponse = {
+	it('Should fail ms request when status code not 200', async () => {
+		const keyArn = 'arn:aws:kms:us-east-1:026813942644:key/XXXXXXXX-XXXX-XXXX-XXXX-123456789876';
+		const stubKeyArn = sinon.stub(MeliAuthSdk, '_getKmsArn').returns(keyArn);
+
+		const msResponse = {
 			statusCode: 403,
 			body: {}
 		};
-		stubMs = sinon.stub(MicroServiceCall.prototype, 'get').resolves(msResponse);
+
+		const stubMs = sinon.stub(MicroServiceCall.prototype, 'get').resolves(msResponse);
+		// eslint-disable-next-line no-underscore-dangle
+		assert.rejects(MeliAuthSdk.getAccessToken(), {
+			name: 'MeliAuthSdkError',
+			code: MeliAuthSdkError.codes.REMOTE_REQUEST_FAIL
+		});
+
+		stubMs.restore();
+		stubKeyArn.restore();
+	});
+
+	it('Should fail ms request when ms call throws an error', async () => {
+		const keyArn = 'arn:aws:kms:us-east-1:026813942644:key/XXXXXXXX-XXXX-XXXX-XXXX-123456789876';
+		const stubKeyArn = sinon.stub(MeliAuthSdk, '_getKmsArn').returns(keyArn);
+
+		const error = new Error('Random error');
+		const stubMs = sinon.stub(MicroServiceCall.prototype, 'get').rejects(error);
 
 		// eslint-disable-next-line no-underscore-dangle
 		assert.rejects(MeliAuthSdk.getAccessToken(), {
