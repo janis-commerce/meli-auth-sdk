@@ -14,7 +14,7 @@ describe('MeliAuthSdk', () => {
 		const keyArn = 'arn:aws:kms:us-east-1:026813942644:key/XXXXXXXX-XXXX-XXXX-XXXX-123456789876';
 		const stub = sinon.stub(Settings, 'get').returns(keyArn);
 		// eslint-disable-next-line no-underscore-dangle
-		assert.deepEqual(MeliAuthSdk._getKetArn(), keyArn);
+		assert.deepEqual(MeliAuthSdk._getKmsArn(), keyArn);
 		stub.restore();
 	});
 
@@ -22,7 +22,7 @@ describe('MeliAuthSdk', () => {
 		const keyArn = null;
 		const stub = sinon.stub(Settings, 'get').returns(keyArn);
 		// eslint-disable-next-line no-underscore-dangle
-		assert.throws(() => { MeliAuthSdk._getKetArn(); }, {
+		assert.throws(() => { MeliAuthSdk._getKmsArn(); }, {
 			name: 'MeliAuthSdkError',
 			code: MeliAuthSdkError.codes.ARN_NOT_FOUND
 		});
@@ -43,7 +43,7 @@ describe('MeliAuthSdk', () => {
 			accessToken: 'testresulttoken'
 		};
 
-		const stubKeyArn = sinon.stub(MeliAuthSdk, '_getKetArn').returns(keyArn);
+		const stubKeyArn = sinon.stub(MeliAuthSdk, '_getKmsArn').returns(keyArn);
 		const stubMs = sinon.stub(MicroServiceCall.prototype, 'get').resolves(msResponse);
 		const stubKms = sinon.stub(KmsEncryption.prototype, 'decrypt').returns(kmsResponse);
 
@@ -56,7 +56,7 @@ describe('MeliAuthSdk', () => {
 
 	it('Should fail ms request', async () => {
 		const keyArn = 'arn:aws:kms:us-east-1:026813942644:key/XXXXXXXX-XXXX-XXXX-XXXX-123456789876';
-		const stubKeyArn = sinon.stub(MeliAuthSdk, '_getKetArn').returns(keyArn);
+		const stubKeyArn = sinon.stub(MeliAuthSdk, '_getKmsArn').returns(keyArn);
 
 		let msResponse = {
 			statusCode: 200
@@ -89,7 +89,7 @@ describe('MeliAuthSdk', () => {
 
 	it('Should fail for no credentials in response', async () => {
 		const keyArn = 'arn:aws:kms:us-east-1:026813942644:key/XXXXXXXX-XXXX-XXXX-XXXX-123456789876';
-		const stubKeyArn = sinon.stub(MeliAuthSdk, '_getKetArn').returns(keyArn);
+		const stubKeyArn = sinon.stub(MeliAuthSdk, '_getKmsArn').returns(keyArn);
 
 		const msResponse = {
 			statusCode: 200,
@@ -126,7 +126,7 @@ describe('MeliAuthSdk', () => {
 			something: ''
 		};
 
-		const stubKeyArn = sinon.stub(MeliAuthSdk, '_getKetArn').returns(keyArn);
+		const stubKeyArn = sinon.stub(MeliAuthSdk, '_getKmsArn').returns(keyArn);
 		const stubMs = sinon.stub(MicroServiceCall.prototype, 'get').resolves(msResponse);
 		let stubKms = sinon.stub(KmsEncryption.prototype, 'decrypt').returns(kmsResponse);
 
