@@ -4,34 +4,53 @@ const Settings = require('@janiscommerce/settings');
 const MicroServiceCall = require('@janiscommerce/microservice-call');
 const KmsEncryption = require('@janiscommerce/kms-encryption');
 const assert = require('assert');
-const sinon = require('sinon');
+const sandbox = require('sinon').createSandbox();
 const MeliAuthSdk = require('./../index');
 const MeliAuthSdkError = require('./../lib/meli-auth-sdk-error');
 
-
 describe('MeliAuthSdk', () => {
+
+	beforeEach(() => {
+		this.keyArn = 'arn:aws:kms:us-east-1:026813942644:key/XXXXXXXX-XXXX-XXXX-XXXX-123456789876';
+		this.stubSettingsGet = sandbox.stub(Settings, 'get').returns(this.keyArn);
+		this.stubMscallGet = sandbox.stub(MicroServiceCall.prototype, 'get');
+		this.stubKms = sandbox.stub(KmsEncryption.prototype, 'decrypt');
+		this.getAccessToken = async () => MeliAuthSdk.getAccessToken('test', '12345');
+	});
+
+	afterEach(() => {
+		sandbox.restore();
+	});
+
+	it('Should throw error for invalid clientName', () => {
+		assert.rejects(MeliAuthSdk.getAccessToken(), {
+			name: 'MeliAuthSdkError',
+			code: MeliAuthSdkError.codes.INVALID_CLIENT_NAME
+		});
+	});
+
+	it('Should throw error for invalid sellerId', () => {
+		assert.rejects(MeliAuthSdk.getAccessToken('test'), {
+			name: 'MeliAuthSdkError',
+			code: MeliAuthSdkError.codes.INVALID_SELLER_ID
+		});
+	});
+
 	it('Should get keyArn from settings', () => {
-		const keyArn = 'arn:aws:kms:us-east-1:026813942644:key/XXXXXXXX-XXXX-XXXX-XXXX-123456789876';
-		const stub = sinon.stub(Settings, 'get').returns(keyArn);
 		// eslint-disable-next-line no-underscore-dangle
-		assert.deepEqual(MeliAuthSdk._getKmsArn(), keyArn);
-		stub.restore();
+		assert.deepStrictEqual(MeliAuthSdk._getKmsArn(), this.keyArn);
 	});
 
 	it('Should get an error when keyArn not exists in settings', () => {
-		const keyArn = null;
-		const stub = sinon.stub(Settings, 'get').returns(keyArn);
+		this.stubSettingsGet.returns(null);
 		// eslint-disable-next-line no-underscore-dangle
 		assert.throws(() => { MeliAuthSdk._getKmsArn(); }, {
 			name: 'MeliAuthSdkError',
 			code: MeliAuthSdkError.codes.ARN_NOT_FOUND
 		});
-		stub.restore();
 	});
 
 	it('Should return a token string', async () => {
-		const keyArn = 'arn:aws:kms:us-east-1:026813942644:key/XXXXXXXX-XXXX-XXXX-XXXX-123456789876';
-
 		const msResponse = {
 			statusCode: 200,
 			body: {
@@ -42,85 +61,59 @@ describe('MeliAuthSdk', () => {
 			accessToken: 'testresulttoken'
 		};
 
-		const stubKeyArn = sinon.stub(MeliAuthSdk, '_getKmsArn').returns(keyArn);
-		const stubMs = sinon.stub(MicroServiceCall.prototype, 'get').resolves(msResponse);
-		const stubKms = sinon.stub(KmsEncryption.prototype, 'decrypt').returns(kmsResponse);
+		this.stubMscallGet.resolves(msResponse);
+		this.stubKms.resolves(kmsResponse);
 
-		assert.deepEqual(await MeliAuthSdk.getAccessToken(), kmsResponse.accessToken);
-
-		stubKms.restore();
-		stubMs.restore();
-		stubKeyArn.restore();
+		assert.deepEqual(await this.getAccessToken(), kmsResponse.accessToken);
 	});
 
 	it('Should fail ms request when status code is 200 and no response body', async () => {
-		const keyArn = 'arn:aws:kms:us-east-1:026813942644:key/XXXXXXXX-XXXX-XXXX-XXXX-123456789876';
-		const stubKeyArn = sinon.stub(MeliAuthSdk, '_getKmsArn').returns(keyArn);
-
 		const msResponse = {
 			statusCode: 200
 		};
 
-		const stubMs = sinon.stub(MicroServiceCall.prototype, 'get').resolves(msResponse);
+		this.stubMscallGet.resolves(msResponse);
 		// eslint-disable-next-line no-underscore-dangle
-		assert.rejects(MeliAuthSdk.getAccessToken(), {
+		assert.rejects(this.getAccessToken(), {
 			name: 'MeliAuthSdkError',
 			code: MeliAuthSdkError.codes.REMOTE_REQUEST_FAIL
 		});
-
-		stubMs.restore();
-		stubKeyArn.restore();
 	});
 
 	it('Should fail ms request when status code not 200', async () => {
-		const keyArn = 'arn:aws:kms:us-east-1:026813942644:key/XXXXXXXX-XXXX-XXXX-XXXX-123456789876';
-		const stubKeyArn = sinon.stub(MeliAuthSdk, '_getKmsArn').returns(keyArn);
-
 		const msResponse = {
 			statusCode: 403,
 			body: {}
 		};
 
-		const stubMs = sinon.stub(MicroServiceCall.prototype, 'get').resolves(msResponse);
+		this.stubMscallGet.resolves(msResponse);
 		// eslint-disable-next-line no-underscore-dangle
-		assert.rejects(MeliAuthSdk.getAccessToken(), {
+		assert.rejects(this.getAccessToken(), {
 			name: 'MeliAuthSdkError',
 			code: MeliAuthSdkError.codes.REMOTE_REQUEST_FAIL
 		});
-
-		stubMs.restore();
-		stubKeyArn.restore();
 	});
 
 	it('Should fail ms request when ms call throws an error', async () => {
-		const keyArn = 'arn:aws:kms:us-east-1:026813942644:key/XXXXXXXX-XXXX-XXXX-XXXX-123456789876';
-		const stubKeyArn = sinon.stub(MeliAuthSdk, '_getKmsArn').returns(keyArn);
-
 		const error = new Error('Random error');
-		const stubMs = sinon.stub(MicroServiceCall.prototype, 'get').rejects(error);
+		this.stubMscallGet.rejects(error);
 
 		// eslint-disable-next-line no-underscore-dangle
-		assert.rejects(MeliAuthSdk.getAccessToken(), {
+		assert.rejects(this.getAccessToken(), {
 			name: 'MeliAuthSdkError',
 			code: MeliAuthSdkError.codes.REMOTE_REQUEST_FAIL
 		});
-
-		stubMs.restore();
-		stubKeyArn.restore();
 	});
 
 	it('Should fail for no credentials in response', async () => {
-		const keyArn = 'arn:aws:kms:us-east-1:026813942644:key/XXXXXXXX-XXXX-XXXX-XXXX-123456789876';
-		const stubKeyArn = sinon.stub(MeliAuthSdk, '_getKmsArn').returns(keyArn);
-
 		const msResponse = {
 			statusCode: 200,
 			body: {}
 		};
-		const stubMs = sinon.stub(MicroServiceCall.prototype, 'get').resolves(msResponse);
+		this.stubMscallGet.resolves(msResponse);
 
 		// eslint-disable-next-line no-underscore-dangle
-		assert.rejects(MeliAuthSdk.getAccessToken(), {
+		assert.rejects(this.getAccessToken(), {
 			name: 'MeliAuthSdkError',
 			code: MeliAuthSdkError.codes.CREDENTIALS_NOT_FOUND
 		});
@@ -130,14 +123,9 @@ describe('MeliAuthSdk', () => {
 			code: MeliAuthSdkError.codes.CREDENTIALS_NOT_FOUND,
 			message: 'No credentials found for seller: 123'
 		});
-
-		stubMs.restore();
-		stubKeyArn.restore();
 	});
 
 	it('Should fail for no token in decrypted data', async () => {
-		const keyArn = 'arn:aws:kms:us-east-1:026813942644:key/XXXXXXXX-XXXX-XXXX-XXXX-123456789876';
-
 		const msResponse = {
 			statusCode: 200,
 			body: {
@@ -148,11 +136,10 @@ describe('MeliAuthSdk', () => {
 			something: ''
 		};
 
-		const stubKeyArn = sinon.stub(MeliAuthSdk, '_getKmsArn').returns(keyArn);
-		const stubMs = sinon.stub(MicroServiceCall.prototype, 'get').resolves(msResponse);
-		let stubKms = sinon.stub(KmsEncryption.prototype, 'decrypt').returns(kmsResponse);
+		this.stubMscallGet.resolves(msResponse);
+		this.stubKms.resolves(kmsResponse);
 
-		assert.rejects(MeliAuthSdk.getAccessToken(), {
+		assert.rejects(this.getAccessToken(), {
 			name: 'MeliAuthSdkError',
 			code: MeliAuthSdkError.codes.TOKEN_NOT_FOUND
 		});
@@ -162,16 +149,18 @@ describe('MeliAuthSdk', () => {
 			code: MeliAuthSdkError.codes.TOKEN_NOT_FOUND,
 			message: 'No token found for seller: 123'
 		});
-		stubKms.restore();
 
-		stubKms = sinon.stub(KmsEncryption.prototype, 'decrypt').returns(null);
-		assert.rejects(MeliAuthSdk.getAccessToken(), {
+		this.stubKms.resolves(null);
+		assert.rejects(this.getAccessToken(), {
 			name: 'MeliAuthSdkError',
 			code: MeliAuthSdkError.codes.TOKEN_NOT_FOUND
 		});
 
-		stubMs.restore();
-		stubKeyArn.restore();
+		this.stubKms.rejects('Rejection test');
+		assert.rejects(this.getAccessToken(), {
+			name: 'MeliAuthSdkError',
+			code: MeliAuthSdkError.codes.TOKEN_NOT_FOUND
+		});
 	});
 
 });
