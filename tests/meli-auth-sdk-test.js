@@ -73,7 +73,6 @@ describe('MeliAuthSdk', () => {
 		};
 
 		this.stubMscallGet.resolves(msResponse);
-		// eslint-disable-next-line no-underscore-dangle
 		assert.rejects(this.getAccessToken(), {
 			name: 'MeliAuthSdkError',
 			code: MeliAuthSdkError.codes.REMOTE_REQUEST_FAIL
@@ -87,7 +86,6 @@ describe('MeliAuthSdk', () => {
 		};
 
 		this.stubMscallGet.resolves(msResponse);
-		// eslint-disable-next-line no-underscore-dangle
 		assert.rejects(this.getAccessToken(), {
 			name: 'MeliAuthSdkError',
 			code: MeliAuthSdkError.codes.REMOTE_REQUEST_FAIL
@@ -98,7 +96,6 @@ describe('MeliAuthSdk', () => {
 		const error = new Error('Random error');
 		this.stubMscallGet.rejects(error);
 
-		// eslint-disable-next-line no-underscore-dangle
 		assert.rejects(this.getAccessToken(), {
 			name: 'MeliAuthSdkError',
 			code: MeliAuthSdkError.codes.REMOTE_REQUEST_FAIL
