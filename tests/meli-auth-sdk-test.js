@@ -163,4 +163,13 @@ describe('MeliAuthSdk', () => {
 		});
 	});
 
+	it('Should fail kms decrypt function', async () => {
+		this.stubKms.rejects(new Error('Rejection test'));
+		const kms = new KmsEncryption({ keyArn: this.keyArn });
+		assert.rejects(kms.decrypt(), {
+			name: 'Error',
+			message: 'Rejection test'
+		});
+	});
+
 });
