@@ -149,7 +149,8 @@ describe('MeliAuthSdk', () => {
 			statusCode: 200,
 			body: {
 				credentials: 'validcredentialencrypted-xxxsefweijio',
-				expiresIn: '01-01-2019'
+				expiresIn: '01-01-2019',
+				seller: 1234566
 			}
 		};
 		const kmsResponse = {
@@ -164,10 +165,10 @@ describe('MeliAuthSdk', () => {
 			code: MeliAuthSdkError.codes.TOKEN_NOT_FOUND
 		});
 
-		assert.rejects(MeliAuthSdk.getAccessToken('test', '123'), {
+		assert.rejects(MeliAuthSdk.getAccessToken('test', '1234566'), {
 			name: 'MeliAuthSdkError',
 			code: MeliAuthSdkError.codes.TOKEN_NOT_FOUND,
-			message: 'No token found for seller: 123'
+			message: 'No token found for seller: 1234566'
 		});
 
 		this.stubKms.resolves(null);

@@ -13,15 +13,15 @@ npm install @janiscommerce/meli-auth-sdk
 #### Methods
 -   _async_  getAccessTokent(clientName, sellerId)
 	|  Option     |  Type  |  Description  |
-	|  ---------- | ---- | ----------- |
+	|  ---------- | ------ | ------------- |
 	|  clientName | string | Janis client name |
 	|  sellerId   | string | Seller/User ID of MercadoLibre |
 	|  **returns**| MeliToken | MercadoLibre authorization object |
 
 #### Types
 -   MeliToken
-	|  Property        |  Type  |  Description  |
-	|  ----------- | ---- | ----------- |
+	|  Property    |  Type  |  Description  |
+	|  ----------- | ------ | ------------- |
 	|  accessToken | string | Mercadolibre access token |
 	|  expiresIn   | string | Token expiration date in ISO 8601 format |
 
