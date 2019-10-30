@@ -10,10 +10,20 @@ npm install @janiscommerce/meli-auth-sdk
 ```
 
 ## API
+#### Methods
 -   _async_  getAccessTokent(clientName, sellerId)
-    -   clientName {string} Janis client name
-	-   sellerId {string} Seller/User ID of MercadoLibre
-    -   **returns**  {string} MercadoLibre access token.
+	|  Option     |  Type  |  Description  |
+	|  ---------- | ---- | ----------- |
+	|  clientName | string | Janis client name |
+	|  sellerId   | string | Seller/User ID of MercadoLibre |
+	|  **returns**| MeliToken | MercadoLibre authorization object |
+
+#### Types
+-   MeliToken
+	|  Property        |  Type  |  Description  |
+	|  ----------- | ---- | ----------- |
+	|  accessToken | string | Mercadolibre access token |
+	|  expiresIn   | string | Token expiration date in ISO 8601 format |
 
 ## Usage
 
@@ -33,10 +43,10 @@ class ExampleApi extends API {
 
 	async process() {
 		const orderId = '123455'
-		const token = await MeliAuthSdk.getAccessToken('test', '1234554');
+		const { accessToken, expiresIn } = await MeliAuthSdk.getAccessToken('test', '1234554');
 		const response = await requestPromise({
 			method: 'POST',
-			uri: `https://api.mercadolibre.com/orders/${orderId}?access_token=${token}`
+			uri: `https://api.mercadolibre.com/orders/${orderId}?access_token=${accessToken}`
 			json: true
 		});
 		this.setBody({ response });

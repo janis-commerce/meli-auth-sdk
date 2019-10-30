@@ -54,17 +54,23 @@ describe('MeliAuthSdk', () => {
 		const msResponse = {
 			statusCode: 200,
 			body: {
-				credentials: 'validcredentialencrypted-xxxsefweijio'
+				credentials: 'validcredentialencrypted-xxxsefweijio',
+				expiresIn: '01-01-2019'
 			}
 		};
 		const kmsResponse = {
 			accessToken: 'testresulttoken'
 		};
 
+		const response = {
+			accessToken: kmsResponse.accessToken,
+			expiresIn: msResponse.body.expiresIn
+		};
+
 		this.stubMscallGet.resolves(msResponse);
 		this.stubKms.resolves(kmsResponse);
 
-		assert.deepEqual(await this.getAccessToken(), kmsResponse.accessToken);
+		assert.deepEqual(await this.getAccessToken(), response);
 	});
 
 	it('Should fail ms request when status code is 200 and no response body', async () => {
@@ -122,11 +128,28 @@ describe('MeliAuthSdk', () => {
 		});
 	});
 
+	it('Should fail for no expiration date in response', async () => {
+		const msResponse = {
+			statusCode: 200,
+			body: {
+				credentials: 'testing-testing-testing'
+			}
+		};
+		this.stubMscallGet.resolves(msResponse);
+
+		// eslint-disable-next-line no-underscore-dangle
+		assert.rejects(this.getAccessToken(), {
+			name: 'MeliAuthSdkError',
+			code: MeliAuthSdkError.codes.MALFORMED_RESPONSE
+		});
+	});
+
 	it('Should fail for no token in decrypted data', async () => {
 		const msResponse = {
 			statusCode: 200,
 			body: {
-				credentials: 'validcredentialencrypted-xxxsefweijio'
+				credentials: 'validcredentialencrypted-xxxsefweijio',
+				expiresIn: '01-01-2019'
 			}
 		};
 		const kmsResponse = {
