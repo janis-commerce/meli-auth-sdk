@@ -5,7 +5,7 @@ const MicroServiceCall = require('@janiscommerce/microservice-call');
 const KmsEncryption = require('@janiscommerce/kms-encryption');
 const assert = require('assert');
 const sandbox = require('sinon').createSandbox();
-const MeliAuthSdk = require('./../index');
+const MeliAuthSdk = require('./../lib/meli-auth-sdk');
 const MeliAuthSdkError = require('./../lib/meli-auth-sdk-error');
 
 describe('MeliAuthSdk', () => {
