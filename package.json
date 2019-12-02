@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@janiscommerce/kms-encryption": "^1.0.0",
-    "@janiscommerce/microservice-call": "^2.0.0",
+    "@janiscommerce/microservice-call": "^3.0.0",
     "@janiscommerce/settings": "^1.0.1"
   },
   "files": [
